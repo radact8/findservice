@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    {% for service in ableSercvice %}
+        <ul>
+            <li>サービス:{{service.serviceName}}</li>
+            <li>費用:{{service.cost}}</li>
+            <li>区役所/区民事務所:
+                {% if service.wardOfficePossible == False %}
+                    〇
+                {% else %}
+                    ×
+                {% endif %}
+            </li>
+            <li>{{service.wardOfficeDocument}}</li>
+            <li>コンビニエンスストア:
+                {% if service.conveniencePossible == False %}
+                    〇
+                {% else %}
+                    ×
+                {% endif %}
+            </li>
+            <li>必要書類:{{service.convenienceDocument}}</li>
+            <li>郵送:
+                {% if service.mailfPossible == False %}
+                    〇
+                {% else %}
+                    ×
+                {% endif %}
+            </li>
+            <li>必要書類:{{service.mailDocument}}</li>
+            <li>補足事項:{{service.supplement}}</li>
+        </ul>
+    {% endfor %}
+</body>
+</html>

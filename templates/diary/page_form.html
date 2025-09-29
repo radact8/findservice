@@ -1,0 +1,9 @@
+{% extends "base/diary_base.html" %}
+{% block cbody %}
+<h2>日記を書く</h2>
+<form method="POST">
+    {% casrf_token %}
+    {{ form.as_p }}
+    <button type="submit">保存</button>
+</form>
+{% end block %}

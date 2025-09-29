@@ -1,0 +1,12 @@
+﻿{% extends "base/diary_base.html" %}
+{% block body %}
+<ul>
+    {% for page in page_list%}
+        <li>{{ page.page_date }} :  {{ page.title }}</li>
+    {% empty %}
+        <div>日記のページが1つもありません</div>
+    {% endfor %}
+    
+</ul>
+
+{% endblock %}

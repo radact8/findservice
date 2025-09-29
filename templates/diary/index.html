@@ -1,0 +1,8 @@
+{% extends "base/diary_base.html" %}
+{% block body %}
+<p>{{ datetime_now }}</p>
+<br>
+<a href="{% url 'diary:page_create' %}">日記を書く</a>
+<br>
+<a href="{% url 'diary:page_list' %}">ページ一覧</a>
+{% endblock %}

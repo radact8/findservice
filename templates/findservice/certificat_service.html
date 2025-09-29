@@ -1,0 +1,18 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>条件選択フォーム</title>
+</head>
+<body>
+    <h1>証明書発行の条件を選択してください</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        {{ form.as_p }} 
+        
+        <button type="submit">確認</button>
+    </form>
+</body>
+</html>

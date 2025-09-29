@@ -1,0 +1,19 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <ul>
+        {% for service in services %}
+            <form action="{% url 'use_service' service.id %}">
+                <button type="submit">{{ service.name }}</button>
+            </form>
+        {% empty %}
+            <li>サービスは登録されていません。</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

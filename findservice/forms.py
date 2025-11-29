@@ -18,3 +18,10 @@ class ConditionSelectionForm(forms.ModelForm):
                 "印鑑登録をするには住民登録が必要です。選択内容を確認してください。"
             )
         return cleaned_data 
+
+class EligibilityForm(forms.Form):
+    age = forms.IntegerField(label='年齢', min_value=0)
+    household_size = forms.IntegerField(label='世帯人数', min_value=1, initial=1)
+    monthly_income = forms.IntegerField(label='月収（年金含む）', min_value=0)
+    savings = forms.IntegerField(label='預貯金', min_value=0)
+    has_disability = forms.BooleanField(label='障害・病気で働けない', required=False)

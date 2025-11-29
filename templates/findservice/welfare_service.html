@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>足立区 生活保護シミュレーター</title>
+</head>
+<body>
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2>生活保護 簡易判定（足立区版）</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">判定する</button>
+        </form>
+
+        <hr>
+
+        {% if result %}
+            <div style="background-color: #f0f0f0; padding: 15px;">
+                <h3>判定結果</h3>
+                <p><strong>{{ result.message }}</strong></p>
+                
+                {% if result.is_eligible %}
+                    <p>あなたの最低生活費基準: {{ result.minimum_cost }}円</p>
+                    <p style="color: red; font-size: 1.2em;">
+                        支給見込額: 約 {{ result.amount }} 円 / 月
+                    </p>
+                {% else %}
+                    {% if result.minimum_cost %}
+                        <p>あなたの最低生活費基準: {{ result.minimum_cost }}円</p>
+                        <p>基準を {{ result.excess }} 円 上回っています。</p>
+                    {% endif %}
+                {% endif %}
+                
+                <p><small>※この結果は概算であり、受給を保証するものではありません。詳細は足立区の福祉事務所へご相談ください。</small></p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

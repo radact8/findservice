@@ -4,6 +4,9 @@ import os
 import sys
 
 
+#admin passwordadmin
+
+
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myproject.settings')

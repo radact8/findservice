@@ -2,8 +2,13 @@ from django.shortcuts import render,redirect
 from .logic import WelfareCalculator
 from django.http import HttpResponse
 from .models import Service,certificatServicesConditions,viewCertificatServices,viewCertificatServicesMethod
-from .forms import ConditionSelectionForm,EligibilityForm
+from .forms import EligibilityForm
 from django.http import HttpResponseNotFound
+from .forms import CertificateForm
+from .logic import CertificateService
+from django.shortcuts import render
+from .forms import ChildSupportForm
+from .logic import SupportManager
 # Create your views here.
 def serviceList(request):
     services = Service.objects.all()
@@ -22,14 +27,26 @@ def use_service(request, service_id):
 # 各サービスのビュー
 
 def certificat_service(request, service_id): #証明書発行
-    """
-    条件選択フォームを表示し、POSTデータを受け付けて処理するビュー。
-    """
+    result = None
+    
+    if request.method == 'POST':
+        form = CertificateForm(request.POST)
+        if form.is_valid():
+            # ロジック呼び出し
+            service = CertificateService()
+            result = service.simulate(form.cleaned_data)
+    else:
+        form = CertificateForm()
+    return render(request, 'findservice/certificat_service.html', {
+        'form': form,
+        'result': result
+    }) 
+
     
     # HTTPメソッドがPOSTかどうかをチェック
     if request.method == 'POST':
         # POSTデータを使ってフォームをインスタンス化（データバインディング）
-        form = ConditionSelectionForm(request.POST)
+        form = CertificateForm(request.POST)
         
         # フォームのデータが有効か検証
         if form.is_valid():
@@ -50,7 +67,7 @@ def certificat_service(request, service_id): #証明書発行
 
     else:
         # GETリクエストの場合、空のフォームをインスタンス化して表示
-        form = ConditionSelectionForm()
+        form = CertificateForm()
 
     # テンプレートにフォームを渡してレンダリング
     context = {
@@ -59,42 +76,21 @@ def certificat_service(request, service_id): #証明書発行
     return render(request, 'findservice/certificat_service.html',context)
 
 def education_service(request, service_id): #子育て・教育
-    """
-    条件選択フォームを表示し、POSTデータを受け付けて処理するビュー。
-    """
+    result = None
     
-    # HTTPメソッドがPOSTかどうかをチェック
     if request.method == 'POST':
-        # POSTデータを使ってフォームをインスタンス化（データバインディング）
-        form = ConditionSelectionForm(request.POST)
-        
-        # フォームのデータが有効か検証
+        form = ChildSupportForm(request.POST)
         if form.is_valid():
-            # is_valid()がTrueの場合、データはPythonのTrue/Falseに変換済み
-            
-            # データベースに新しいレコードとして保存条件
-            # commit=True (デフォルト) なので、ここでDBに保存される
-            #condition_set = form.save() 
-            user_conditions = form.cleaned_data
-            
-            # 【重要】データをセッションに保存
-            # セッションキーはユニークな名前に設定
-            request.session['education_service_user_conditions'] = user_conditions
-            return redirect('education_serviceComspatibility')
-            
-            # 処理完了後、確認ページなどにリダイレクトするのが一般的
-            # return redirect('success_page') 
-
+            manager = SupportManager()
+            result = manager.check_support(form.cleaned_data)
     else:
-        # GETリクエストの場合、空のフォームをインスタンス化して表示
-        form = ConditionSelectionForm()
+        form = ChildSupportForm()
 
-    # テンプレートにフォームを渡してレンダリング
     context = {
-        'form': form
+        'form': form,
+        'result': result
     }
-    return render(request, 'findservice/education_service.html',context)
-
+    return render(request, 'findservice/education_service.html', context)
 
 def certificat_compatibility(request,service_id):
     user_conditions = request.session.get('certificat_user_conditions')
@@ -143,3 +139,4 @@ def welfareService(request,service_id):
     
     # 入力画面と結果を同一ページ、あるいは結果ページへレンダリング
     return render(request, 'findservice/welfare_service.html', context)
+

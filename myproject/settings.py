@@ -26,7 +26,7 @@ DEBUG = True
 
 # あなたのドメインを許可リストに加えます
 ALLOWED_HOSTS = ['radact.pythonanywhere.com']
-
+#ALLOWED_HOSTS = []
 
 # Application definition
 

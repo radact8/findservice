@@ -1,4 +1,5 @@
 import datetime
+from .forms import ChildSupportForm
 
 class WelfareCalculator:
     # 足立区（1級地-1）の家賃上限（単身）
@@ -237,7 +238,7 @@ class SupportManager:
             })
 
         return {
-            'stage_display': dict(forms.ChildSupportForm.STAGE_CHOICES).get(stage),
+            'stage_display': dict(ChildSupportForm.STAGE_CHOICES).get(stage),
             'supports': supports,
             'total_cash': total_monthly_benefit
         }

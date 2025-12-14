@@ -3,17 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>足立区 サービス一覧</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .service-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            height: 100%; /* カードの高さを揃える */
+        }
+        .service-card:hover {
+            transform: translateY(-5px); /* ホバー時に少し浮く */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+            border-color: #0d6efd;
+        }
+        .icon-box {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
-<body>
-    <ul>
+<body class="bg-light">
+
+<div class="bg-primary text-white py-4 mb-5">
+    <div class="container">
+        <h1 class="h3 fw-bold mb-0">足立区 くらしのサポートサービス</h1>
+        <p class="mb-0 opacity-75">必要なサービスを選択してください</p>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        
         {% for service in services %}
-            <form action="{% url 'use_service' service.id %}">
-                <button type="submit">{{ service.name }}</button>
-            </form>
+            <div class="col">
+                <div class="card h-100 shadow-sm service-card border-0">
+                    <div class="card-body text-center d-flex flex-column justify-content-center py-5">
+                        
+                        <div class="icon-box">
+                            {% if service.id == 1 %}
+                                📄 {% elif service.id == 2 %}
+                                👶 {% elif service.id == 6 %}
+                                🏠 {% else %}
+                                💁 {% endif %}
+                        </div>
+
+                        <h5 class="card-title fw-bold mb-3">{{ service.name }}</h5>
+                        
+                        <p class="card-text text-muted small mb-4">
+                            {% if service.id == 1 %}
+                                コンビニ交付と窓口の手数料を比較・シミュレーションします。
+                            {% elif service.id == 2 %}
+                                児童手当や医療費助成など、受けられる支援を確認します。
+                            {% elif service.id == 6 %}
+                                収入や世帯状況から、生活保護の受給可能性を判定します。
+                            {% else %}
+                                このサービスを利用するための手続きを行います。
+                            {% endif %}
+                        </p>
+
+                        <a href="{% url 'use_service' service.id %}" class="btn btn-outline-primary rounded-pill px-4 mt-auto stretched-link">
+                            利用する
+                        </a>
+
+                    </div>
+                </div>
+            </div>
         {% empty %}
-            <li>サービスは登録されていません。</li>
+            <div class="col-12 text-center py-5">
+                <p class="text-muted fs-5">現在、利用可能なサービスは登録されていません。</p>
+            </div>
         {% endfor %}
-    </ul>
+        
+    </div>
+</div>
+
 </body>
 </html>

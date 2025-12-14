@@ -25,8 +25,8 @@ SECRET_KEY = 'django-insecure-0+6qh6ee-x6yebaxw70n_k^1f-e9n+)+g8g6sll$l_3q96=axh
 DEBUG = True
 
 # あなたのドメインを許可リストに加えます
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['radact.pythonanywhere.com']
+#ALLOWED_HOSTS = []
 
 # Application definition
 

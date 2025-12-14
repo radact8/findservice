@@ -1,8 +1,8 @@
 ﻿from django import forms
-from .models import certificatServicesConditions
 
-from django import forms
-
+# ==========================================
+# 1. コンビニ交付・証明書発行シミュレーション用
+# ==========================================
 class CertificateForm(forms.Form):
     # 証明書の種類
     CERT_CHOICES = [
@@ -33,15 +33,92 @@ class CertificateForm(forms.Form):
         widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 100px;'})
     )
 
+# ==========================================
+# 2. 生活保護 簡易判定用（大幅アップデート版）
+# ==========================================
 class EligibilityForm(forms.Form):
-    age = forms.IntegerField(label='年齢', min_value=0)
-    household_size = forms.IntegerField(label='世帯人数', min_value=1, initial=1)
-    monthly_income = forms.IntegerField(label='月収（年金含む）', min_value=0)
-    savings = forms.IntegerField(label='預貯金', min_value=0)
-    has_disability = forms.BooleanField(label='障害・病気で働けない', required=False)
+    # --- 基本属性 ---
+    age = forms.IntegerField(
+        label='世帯主の年齢',
+        min_value=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '例: 35'})
+    )
 
-from django import forms
+    # --- 世帯構成（判定精度のカギ） ---
+    household_size = forms.IntegerField(
+        label='世帯人数（あなたを含む全員）',
+        min_value=1,
+        initial=1,
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        help_text='※家賃の上限額判定に使用します'
+    )
 
+    num_children = forms.IntegerField(
+        label='そのうち18歳以下の子供の人数',
+        min_value=0,
+        initial=0,
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        help_text='※児童養育加算の判定に使用します'
+    )
+
+    is_single_parent = forms.BooleanField(
+        label='ひとり親世帯ですか？',
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        help_text='※母子加算・父子加算の判定に使用します'
+    )
+
+    # --- 経済状況 ---
+    # logic.pyに合わせて 'income' に統一
+    income = forms.IntegerField(
+        label='世帯の月収（給与・年金・手当など）',
+        min_value=0,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '例: 120000'}),
+        help_text='※手取りではなく総支給額の目安を入力してください'
+    )
+
+    rent = forms.IntegerField(
+        label='現在の家賃（管理費・共益費は除く）',
+        min_value=0,
+        initial=0,
+        required=True,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '例: 53000'}),
+        help_text='※持ち家の場合は0円'
+    )
+
+    savings = forms.IntegerField(
+        label='世帯全員の預貯金・現金合計',
+        min_value=0,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '例: 50000'})
+    )
+
+    has_asset = forms.BooleanField(
+        label='処分価値のある資産（車・バイク・不動産）を持っていますか？',
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        help_text='※生活に必須でない資産は処分の対象となります'
+    )
+
+    # --- 健康状態（統合版） ---
+    disability_level = forms.ChoiceField(
+        label='健康状態・障害の有無',
+        choices=[
+            ('healthy', '健康 / 働ける'),
+            ('sick_no_cert', '病気・ケガで療養中（手帳なし）'),
+            ('grade3', '障害者手帳 3級'),
+            ('grade12', '障害者手帳 1・2級（または障害年金1・2級）'),
+        ],
+        initial='healthy',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='※障害者加算の判定に使用します'
+    )
+
+# ==========================================
+# 3. 子育て・教育支援 シミュレーション用
+# ==========================================
 class ChildSupportForm(forms.Form):
     # お子様の年齢・学年区分
     STAGE_CHOICES = [
@@ -59,7 +136,6 @@ class ChildSupportForm(forms.Form):
     )
 
     # 第何子か（児童手当の加算判定用）
-    # ※令和6年10月からの拡充を見据え、第3子以降は重要
     child_order = forms.IntegerField(
         label='第何子ですか？（1, 2, 3...）',
         min_value=1,

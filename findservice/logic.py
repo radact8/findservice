@@ -1,5 +1,6 @@
 # logic.py
 import datetime
+from .forms import ChildSupportForm
 
 class WelfareCalculator:
     """
@@ -218,7 +219,7 @@ class SupportManager:
             })
 
         return {
-            'stage_display': dict(forms.ChildSupportForm.STAGE_CHOICES).get(stage),
+            'stage_display': dict(ChildSupportForm.STAGE_CHOICES).get(stage),
             'supports': supports,
             'total_cash': total_monthly_benefit
         }

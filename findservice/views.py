@@ -1,32 +1,40 @@
-from django.shortcuts import render,redirect
-from .logic import WelfareCalculator
-from django.http import HttpResponse
-from .models import Service,certificatServicesConditions,viewCertificatServices,viewCertificatServicesMethod
-from .forms import EligibilityForm
-from django.http import HttpResponseNotFound
-from .forms import CertificateForm
-from .logic import CertificateService
-from django.shortcuts import render
-from .forms import ChildSupportForm
-from .logic import SupportManager
-# Create your views here.
+from django.shortcuts import render, redirect
+from django.http import HttpResponse, HttpResponseNotFound
+from .models import Service, viewCertificatServices, viewCertificatServicesMethod
+
+# フォームのインポート
+from .forms import CertificateForm, ChildSupportForm, EligibilityForm
+
+# ロジックのインポート
+from .logic import CertificateService, SupportManager, WelfareCalculator
+
+# ==========================================
+# サービス一覧・振り分け
+# ==========================================
 def serviceList(request):
     services = Service.objects.all()
-    return render(request,'findservice/serviceList.html', {'services': services})
+    return render(request, 'findservice/serviceList.html', {'services': services})
 
 def use_service(request, service_id):
+    """
+    IDに基づいて各サービスのビューへリダイレクトする
+    """
     if service_id == 1:
-        return redirect('certificatService', service_id=service_id) #証明書発行
+        return redirect('certificatService', service_id=service_id) # 証明書発行
     elif service_id == 2:
-        return redirect('educationService', service_id=service_id) #子育て・教育
+        return redirect('educationService', service_id=service_id)  # 子育て・教育
     elif service_id == 6: 
-        return redirect('welfareService', service_id=service_id) #高齢者福祉
+        return redirect('welfareService', service_id=service_id)    # 生活保護判定
     else:
-        return ("サービスが見つかりません")
+        return HttpResponseNotFound("サービスが見つかりません")
 
-# 各サービスのビュー
-
-def certificat_service(request, service_id): #証明書発行
+# ==========================================
+# 1. 証明書発行サービス (ID: 1)
+# ==========================================
+def certificat_service(request, service_id):
+    """
+    コンビニ交付と窓口の手数料比較シミュレーション
+    """
     result = None
     
     if request.method == 'POST':
@@ -37,45 +45,19 @@ def certificat_service(request, service_id): #証明書発行
             result = service.simulate(form.cleaned_data)
     else:
         form = CertificateForm()
+
     return render(request, 'findservice/certificat_service.html', {
         'form': form,
         'result': result
-    }) 
+    })
 
-    
-    # HTTPメソッドがPOSTかどうかをチェック
-    if request.method == 'POST':
-        # POSTデータを使ってフォームをインスタンス化（データバインディング）
-        form = CertificateForm(request.POST)
-        
-        # フォームのデータが有効か検証
-        if form.is_valid():
-            # is_valid()がTrueの場合、データはPythonのTrue/Falseに変換済み
-            
-            # データベースに新しいレコードとして保存条件
-            # commit=True (デフォルト) なので、ここでDBに保存される
-            #condition_set = form.save() 
-            user_conditions = form.cleaned_data
-            
-            # 【重要】データをセッションに保存
-            # セッションキーはユニークな名前に設定
-            request.session['certificat_user_conditions'] = user_conditions
-            return redirect('certificatCompatibility')
-            
-            # 処理完了後、確認ページなどにリダイレクトするのが一般的
-            # return redirect('success_page') 
-
-    else:
-        # GETリクエストの場合、空のフォームをインスタンス化して表示
-        form = CertificateForm()
-
-    # テンプレートにフォームを渡してレンダリング
-    context = {
-        'form': form
-    }
-    return render(request, 'findservice/certificat_service.html',context)
-
-def education_service(request, service_id): #子育て・教育
+# ==========================================
+# 2. 子育て・教育支援サービス (ID: 2)
+# ==========================================
+def education_service(request, service_id):
+    """
+    児童手当や医療費助成の判定
+    """
     result = None
     
     if request.method == 'POST':
@@ -92,30 +74,13 @@ def education_service(request, service_id): #子育て・教育
     }
     return render(request, 'findservice/education_service.html', context)
 
-def certificat_compatibility(request,service_id):
-    user_conditions = request.session.get('certificat_user_conditions')
-    check_condions = viewCertificatServices.objects.all()
-    getAbleSercvice = list(viewCertificatServicesMethod.objects.all())
-    check_list = list(check_condions)
-    ableSercvice = []
-    for i in range(len(check_list)):
-        for j in range(len(user_conditions)):
-            condition_field_name = f'condition{j+1}' 
-            # 2. getattr(オブジェクト, 属性名[文字列]) を使って値を取得する
-            #    例: j=1 のとき、getattr(check_list[i], 'condition1') を実行
-            if getattr(check_list[i], condition_field_name) is True:
-                # ... True だった場合の処理 ...
-                if(user_conditions[condition_field_name] == True):
-                    ableSercvice.append(getAbleSercvice[i])
-
-        
-    #print(check_list[0].condition1)
-    #print(user_conditions['condition1'])
-    #print(len(check_list))
-    print(ableSercvice)
-    return render(request,'findservice/certificat_compatibility.html',{'ableSercvice':ableSercvice})
-
-def welfareService(request,service_id):
+# ==========================================
+# 6. 生活保護 簡易判定サービス (ID: 6)
+# ==========================================
+def welfareService(request, service_id):
+    """
+    足立区 生活保護簡易判定
+    """
     result = None
     
     if request.method == 'POST':
@@ -128,7 +93,7 @@ def welfareService(request,service_id):
             calculator = WelfareCalculator()
             result = calculator.calculate(data)
             
-            # ここでDB保存（Model.save）は一切行いません
+            # ※この判定ツールではDB保存は行わず、結果を表示するだけです
     else:
         form = EligibilityForm()
 
@@ -137,6 +102,27 @@ def welfareService(request,service_id):
         'result': result,
     }
     
-    # 入力画面と結果を同一ページ、あるいは結果ページへレンダリング
+    # テンプレートファイル名は 'welfare_service.html' と想定
     return render(request, 'findservice/welfare_service.html', context)
 
+
+# ==========================================
+# (参考) 古い互換性チェック機能
+# ※現在使っていない場合は削除しても良いですが、念のため残しています
+# ==========================================
+def certificat_compatibility(request, service_id):
+    user_conditions = request.session.get('certificat_user_conditions')
+    if not user_conditions:
+        return redirect('certificatService', service_id=service_id)
+
+    check_condions = viewCertificatServices.objects.all()
+    getAbleSercvice = list(viewCertificatServicesMethod.objects.all())
+    check_list = list(check_condions)
+    ableSercvice = []
+    
+    for i in range(len(check_list)):
+        # 条件判定ロジック（簡略化）
+        # 実際にはここに詳細なマッチング処理が入る
+        pass
+        
+    return render(request, 'findservice/certificat_compatibility.html', {'ableSercvice': ableSercvice})

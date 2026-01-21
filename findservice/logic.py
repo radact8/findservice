@@ -227,16 +227,94 @@ class SupportManager:
 class CertificateService:
     # ... (既存のCERT_DATA設定) ...
     # 省略（元のコードのままでOKですが、simluateメソッドの最後の注意書きだけ修正します）
+    CERT_DATA = {
+        'jumin': {
+            'name': '住民票の写し',
+            'fee_window': 300,
+            'fee_konbini': 200,
+            'konbini_available': True
+        },
+        'inkan': {
+            'name': '印鑑登録証明書',
+            'fee_window': 300,
+            'fee_konbini': 200,
+            'konbini_available': True
+        },
+        'koseki': {
+            'name': '戸籍全部（個人）事項証明書',
+            'fee_window': 450,
+            'fee_konbini': 450, # 戸籍は同額の場合が多いが区により異なる（足立区は同額または低減）
+            'konbini_available': True
+        },
+        'tax': {
+            'name': '課税・非課税証明書',
+            'fee_window': 300,
+            'fee_konbini': 200,
+            'konbini_available': True
+        }
+    }
+    
 
     def simulate(self, data):
         # ... (前半のロジックは同じ) ...
+        """
+        フォームデータを受け取り、最適な取得方法と料金を返す
+        """
+        cert_type = data['cert_type']
+        has_card = data['has_mynumber_card']
+        copies = data['copies']
+
+        # 選択された証明書のデータ取得
+        info = self.CERT_DATA.get(cert_type)
+        if not info:
+            return None
+
+        result = {
+            'name': info['name'],
+            'copies': copies,
+            'recommendation': '',
+            'total_fee': 0,
+            'places': []
+        }
+
+        # --- 判定ロジック ---
+
+        # パターンA: マイナンバーカードがあり、コンビニ交付対応の証明書の場合
+        if has_card and info['konbini_available']:
+            unit_price = info['fee_konbini']
+            total = unit_price * copies
+
+            result['recommendation'] = 'コンビニ交付がおすすめです！'
+            result['is_konbini'] = True
+            result['unit_price'] = unit_price
+            result['total_fee'] = total
+            result['places'] = ['セブンイレブン', 'ローソン', 'ファミリーマート', 'ミニストップ']
+            result['message'] = (
+                f'窓口よりも待ち時間が少なく、手数料もお得（または同額）です。\n'
+                f'マルチコピー機で「行政サービス」を選択してください。'
+            )
+
+        # パターンB: カードがない、またはコンビニ非対応の場合 -> 窓口案内
+        else:
+            unit_price = info['fee_window']
+            total = unit_price * copies
+
+            result['recommendation'] = '区役所・区民事務所の窓口へお越しください'
+            result['is_konbini'] = False
+            result['unit_price'] = unit_price
+            result['total_fee'] = total
+            result['places'] = ['足立区役所（本庁）', '各区民事務所（千住、綾瀬など）']
+
         
         # 注意書きの追加
         maintenance_msg = '\n※年末年始（12/29〜1/3）やメンテナンス日はコンビニ交付を利用できません。'
-        
-        if result['message']:
-            result['message'] += maintenance_msg
+
+        # Safely get current message; default to empty string if key is missing or value is None
+        current_msg = result.get('message') or ''
+
+        if current_msg:
+            result['message'] = current_msg + maintenance_msg
         else:
-             result['message'] = maintenance_msg.strip()
-             
+            # Use strip() to remove the leading newline since it's the only text
+            result['message'] = maintenance_msg.strip()
         return result
